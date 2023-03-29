@@ -1,0 +1,31 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  IMAGE_TAG: latest
+  DOCKER_REGISTRY: your.docker.registry
+
+build:
+  image: docker:20.10.8
+  stage: build
+  script:
+    - docker build -t $DOCKER_REGISTRY/my-sample-app:$IMAGE_TAG .
+    - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD $DOCKER_REGISTRY
+    - docker push $DOCKER_REGISTRY/my-sample-app:$IMAGE_TAG
+
+test:
+  image: node:14.17.6
+  stage: test
+  script:
+    - npm install
+    - npm test
+
+deploy:
+  image: docker:20.10.8
+  stage: deploy
+  script:
+    - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD $DOCKER_REGISTRY
+    - docker pull $DOCKER_REGISTRY/my-sample-app:$IMAGE_TAG
+    - docker run --rm -d -p 80:80 $DOCKER_REGISTRY/my-sample-app:$IMAGE_TAG
